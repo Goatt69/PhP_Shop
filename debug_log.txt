@@ -1,0 +1,26 @@
+[2025-03-12 05:17:14] Starting order processing
+[2025-03-12 05:17:14] Cart contents: Array
+(
+    [3] => Array
+        (
+            [name] => Bút xanh
+            [price] => 5000
+            [quantity] => 3
+            [image] => uploads/67d0e02da0938-vn-11134201-23030-1edntam3oiov7d.webp
+        )
+
+    [1] => Array
+        (
+            [name] => Bút màu xanh
+            [price] => 100000000
+            [quantity] => 1
+            [image] => 
+        )
+
+)
+
+[2025-03-12 05:17:14] Executing order query with data: name=Quốc Duy, phone=0123456789, address=123
+[2025-03-12 05:17:14] Order created with ID: 1
+[2025-03-12 05:17:14] Processing product ID: 3
+[2025-03-12 05:17:14] Processing product ID: 1
+[2025-03-12 05:17:14] Order processing completed successfully
