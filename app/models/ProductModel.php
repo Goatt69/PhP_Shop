@@ -61,6 +61,7 @@ class ProductModel
         $price = floatval($price); // DECIMAL(12,2)
         $imagePath = $this->handleImageUpload($image);
         $category_id = $category_id ? intval($category_id) : null; // Allow NULL for foreign key
+
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':description', $description);
         $stmt->bindParam(':price', $price); // Bind as float
