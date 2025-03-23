@@ -8,28 +8,75 @@ $url = rtrim($url, '/');
 $url = filter_var($url, FILTER_SANITIZE_URL);
 $url = explode('/', $url);
 
-// Kiểm tra phần đầu tiên của URL để xác định controller
-$controllerName = isset($url[0]) && $url[0] != '' ? ucfirst($url[0]) . 'Controller' : 'DefaultController';
-// Kiểm tra phần thứ hai của URL để xác định action
-$action = isset($url[1]) && $url[1] != '' ? $url[1] : 'index';
-// die ("controller=$controllerName - action=$action");
-// Kiểm tra xem controller và action có tồn tại không
+// Check if this is an API request
+$isApiRequest = isset($url[0]) && $url[0] === 'api';
 
-if (!file_exists('app/controllers/' . $controllerName . '.php'))
-{
-	// Xử lý không tìm thấy controller
-	die('Controller not found');
+if ($isApiRequest) {
+    // API routing
+    $resource = isset($url[1]) ? $url[1] : '';
+    $id = isset($url[2]) && is_numeric($url[2]) ? $url[2] : null;
+    $action = isset($url[3]) ? $url[3] : '';
+
+    // Map HTTP method to controller action
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    if ($resource === 'products') {
+        require_once 'app/controllers/ProductApiController.php';
+        $controller = new ProductApiController();
+
+        switch ($method) {
+            case 'GET':
+                if ($id) {
+                    $controller->show($id);
+                } else {
+                    $controller->index();
+                }
+                break;
+            case 'POST':
+                if (!$id) {
+                    $controller->store();
+                }
+                break;
+            case 'PUT':
+                if ($id) {
+                    $controller->update($id);
+                }
+                break;
+            case 'DELETE':
+                if ($id) {
+                    $controller->destroy($id);
+                }
+                break;
+            default:
+                header('Content-Type: application/json');
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+                exit;
+        }
+    } elseif ($resource === 'orders' && $method === 'POST') {
+        require_once 'app/controllers/ProductApiController.php';
+        $controller = new ProductApiController();
+        $controller->createOrder();
+    } else {
+        header('Content-Type: application/json');
+        http_response_code(404);
+        echo json_encode(['error' => 'Resource not found']);
+        exit;
+    }
+} else {
+    // Original web routing
+    $controllerName = isset($url[0]) && $url[0] != '' ? ucfirst($url[0]) . 'Controller' : 'DefaultController';
+    $action = isset($url[1]) && $url[1] != '' ? $url[1] : 'index';
+
+    if (!file_exists('app/controllers/' . $controllerName . '.php')) {
+        die('Controller not found');
+    }
+    require_once 'app/controllers/' . $controllerName . '.php';
+    $controller = new $controllerName();
+
+    if (!method_exists($controller, $action)) {
+        die('Action not found');
+    }
+
+    call_user_func_array([$controller, $action], array_slice($url, 2));
 }
-require_once 'app/controllers/' . $controllerName . '.php';
-$controller = new $controllerName();
-
-if (!method_exists($controller, $action))
-{
-	// Xử lý không tìm thấy action
-	die('Action not found');
-}
-
-// Gọi action với các tham số còn lại (nếu có)
-call_user_func_array([$controller, $action], array_slice($url, 2));
-
-?>
