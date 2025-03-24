@@ -61,7 +61,43 @@ if ($isApiRequest) {
                 echo json_encode(['error' => 'Method not allowed']);
                 exit;
         }
-    } elseif ($resource === 'orders' && $method === 'POST') {
+    } elseif ($resource === 'categories') {
+        require_once 'app/controllers/CategoryApiController.php';
+        $controller = new CategoryApiController();
+
+        switch ($method) {
+            case 'GET':
+                if ($id) {
+                    $controller->show($id);
+                } else {
+                    $controller->index();
+                }
+                break;
+            case 'POST':
+                if ($id) {
+                    // Handle POST with method override for update
+                    $controller->update($id);
+                } else {
+                    $controller->store();
+                }
+                break;
+            case 'PUT':
+                if ($id) {
+                    $controller->update($id);
+                }
+                break;
+            case 'DELETE':
+                if ($id) {
+                    $controller->destroy($id);
+                }
+                break;
+            default:
+                header('Content-Type: application/json');
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+                exit;
+        }
+    }elseif ($resource === 'orders' && $method === 'POST') {
         require_once 'app/controllers/ProductApiController.php';
         $controller = new ProductApiController();
         $controller->createOrder();

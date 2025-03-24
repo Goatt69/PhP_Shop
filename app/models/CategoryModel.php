@@ -47,8 +47,8 @@ class CategoryModel
 
         $query = "INSERT INTO " . $this->table_name . " (name, description) VALUES (:name, :description)";
         $stmt = $this->conn->prepare($query);
-        $name = htmlspecialchars(strip_tags($name));
-        $description = htmlspecialchars(strip_tags($description ?? '')); // TEXT allows NULL
+        $name = strip_tags($name);
+        $description = strip_tags($description ?? ''); // TEXT allows NULL
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':description', $description);
 
@@ -70,8 +70,8 @@ class CategoryModel
 
         $query = "UPDATE " . $this->table_name . " SET name = :name, description = :description WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-        $name = htmlspecialchars(strip_tags($name));
-        $description = htmlspecialchars(strip_tags($description ?? '')); // TEXT allows NULL
+        $name = strip_tags($name);
+        $description = strip_tags($description ?? ''); // TEXT allows NULL
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':description', $description);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
