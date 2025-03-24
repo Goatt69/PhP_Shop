@@ -29,7 +29,7 @@ if (!SessionHelper::isAdmin()) {
         <?php endif; ?>
 
         <!-- Form -->
-        <form method="POST" action="/ProductManager/Product/save" enctype="multipart/form-data" onsubmit="return validateForm();" class="space-y-6">
+        <form id="add-product-form" method="POST" action="/ProductManager/Product/save" enctype="multipart/form-data" onsubmit="return validateForm();" class="space-y-6">
             <div>
                 <label for="name" class="block text-lg font-medium text-gray-800 mb-2">Tên sản phẩm:</label>
                 <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($_POST['name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required
@@ -77,3 +77,30 @@ if (!SessionHelper::isAdmin()) {
 // Include header.php
 include __DIR__ . '/../footer.php'; 
 ?>
+
+<script>
+    document.getElementById('add-product-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Create FormData object to handle file uploads
+        const formData = new FormData(this);
+
+        fetch('/ProductManager/api/products', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/ProductManager/Product/list';
+                } else {
+                    // Display errors
+                    alert('Error: ' + (data.message || 'Failed to add product'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while adding the product');
+            });
+    });
+</script>

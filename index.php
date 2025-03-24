@@ -20,6 +20,11 @@ if ($isApiRequest) {
     // Map HTTP method to controller action
     $method = $_SERVER['REQUEST_METHOD'];
 
+    // Handle method override for PUT/DELETE in forms
+    if ($method === 'POST' && isset($_POST['_method'])) {
+        $method = strtoupper($_POST['_method']);
+    }
+
     if ($resource === 'products') {
         require_once 'app/controllers/ProductApiController.php';
         $controller = new ProductApiController();
@@ -33,7 +38,10 @@ if ($isApiRequest) {
                 }
                 break;
             case 'POST':
-                if (!$id) {
+                if ($id) {
+                    // Handle POST with file uploads for update
+                    $controller->update($id);
+                } else {
                     $controller->store();
                 }
                 break;

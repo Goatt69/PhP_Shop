@@ -1,6 +1,7 @@
 <?php
 require_once ('app/config/database.php');
 require_once ('app/models/ProductModel.php');
+require_once ('app/models/CategoryModel.php');
 require_once('app/helpers/SessionHelper.php');
 
 class ProductController
@@ -27,6 +28,25 @@ class ProductController
     {
         $product = $this->productModel->getProductById($id);
         include 'app/views/product/show.php';
+    }
+
+    public function add() {
+        if (!SessionHelper::isAdmin()) {
+            header('Location: /ProductManager/Product/list');
+            exit;
+        }
+        $categories = (new CategoryModel($this->db))->getCategories();
+        include 'app/views/product/add.php';
+    }
+
+    public function edit($id) {
+        if (!SessionHelper::isAdmin()) {
+            header('Location: /ProductManager/Product/list');
+            exit;
+        }
+        $product = $this->productModel->getProductById($id);
+        $categories = (new CategoryModel($this->db))->getCategories();
+        include 'app/views/product/edit.php';
     }
 
     public function addToCart($id) {

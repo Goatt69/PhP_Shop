@@ -59,18 +59,27 @@ class ProductApiController
             $this->sendResponse(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        // Get JSON input
-        $data = json_decode(file_get_contents('php://input'), true);
+        if (!empty($_FILES)) {
+            // Handle form data
+            $name = $_POST['name'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $price = $_POST['price'] ?? '';
+            $category_id = $_POST['category_id'] ?? null;
+            $image = $_FILES['image'] ?? null;
+        } else {
+            // Handle JSON data
+            $data = json_decode(file_get_contents('php://input'), true);
 
-        if (!$data) {
-            $this->sendResponse(['success' => false, 'message' => 'Invalid JSON data'], 400);
+            if (!$data) {
+                $this->sendResponse(['success' => false, 'message' => 'Invalid data'], 400);
+            }
+
+            $name = $data['name'] ?? '';
+            $description = $data['description'] ?? '';
+            $price = $data['price'] ?? '';
+            $category_id = $data['category_id'] ?? null;
+            $image = null;
         }
-
-        $name = $data['name'] ?? '';
-        $description = $data['description'] ?? '';
-        $price = $data['price'] ?? '';
-        $category_id = $data['category_id'] ?? null;
-        $image = null; // Handle image upload separately if needed
 
         $result = $this->productModel->addProduct($name, $description, $price, $category_id, $image);
 
@@ -91,18 +100,34 @@ class ProductApiController
             $this->sendResponse(['success' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        // Get JSON input
-        $data = json_decode(file_get_contents('php://input'), true);
+        // Check if this is a multipart form submission or JSON
+        if (!empty($_POST)) {
+            // Handle form data
+            $name = $_POST['name'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $price = $_POST['price'] ?? '';
+            $category_id = $_POST['category_id'] ?? null;
+            $image = null;
 
-        if (!$data) {
-            $this->sendResponse(['success' => false, 'message' => 'Invalid JSON data'], 400);
+            // Only use the image if a file was actually uploaded
+            if (!empty($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $image = $_FILES['image'];
+            }
+
+        } else {
+            // Handle JSON data
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            if (!$data) {
+                $this->sendResponse(['success' => false, 'message' => 'Invalid data'], 400);
+            }
+
+            $name = $data['name'] ?? '';
+            $description = $data['description'] ?? '';
+            $price = $data['price'] ?? '';
+            $category_id = $data['category_id'] ?? null;
+            $image = null;
         }
-
-        $name = $data['name'] ?? '';
-        $description = $data['description'] ?? '';
-        $price = $data['price'] ?? '';
-        $category_id = $data['category_id'] ?? null;
-        $image = null; // Handle image upload separately if needed
 
         $result = $this->productModel->updateProduct($id, $name, $description, $price, $category_id, $image);
 
