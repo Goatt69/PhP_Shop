@@ -56,11 +56,12 @@ class ProductModel
         $query = "INSERT INTO " . $this->table_name . " (name, description, price, image, category_id) 
                   VALUES (:name, :description, :price, :image, :category_id)";
         $stmt = $this->conn->prepare($query);
-        $name = htmlspecialchars(strip_tags($name));
-        $description = htmlspecialchars(strip_tags($description ?? '')); // TEXT allows NULL
+        $name = strip_tags($name);
+        $description = strip_tags($description ?? '');
         $price = floatval($price); // DECIMAL(12,2)
         $imagePath = $this->handleImageUpload($image);
         $category_id = $category_id ? intval($category_id) : null; // Allow NULL for foreign key
+
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':description', $description);
         $stmt->bindParam(':price', $price); // Bind as float
@@ -107,8 +108,8 @@ class ProductModel
         $query .= " WHERE id = :id";
 
         $stmt = $this->conn->prepare($query);
-        $name = htmlspecialchars(strip_tags($name));
-        $description = htmlspecialchars(strip_tags($description ?? ''));
+        $name = strip_tags($name);
+        $description = strip_tags($description ?? '');
         $price = floatval($price);
         $category_id = $category_id ? intval($category_id) : null;
 

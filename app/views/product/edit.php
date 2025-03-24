@@ -24,7 +24,7 @@ if (!SessionHelper::isAdmin()) {
         <?php endif; ?>
 
         <!-- Form -->
-        <form method="POST" action="/ProductManager/Product/update" enctype="multipart/form-data" onsubmit="return validateForm();" class="space-y-6">
+        <form id="edit-product-form" method="POST" action="/ProductManager/Product/update" enctype="multipart/form-data" onsubmit="return validateForm();" class="space-y-6">
             <input type="hidden" name="id" value="<?php echo htmlspecialchars($product['id'], ENT_QUOTES, 'UTF-8'); ?>">
             <div>
                 <label for="name" class="block text-lg font-medium text-gray-800 mb-2">Tên sản phẩm:</label>
@@ -81,3 +81,63 @@ if (!SessionHelper::isAdmin()) {
 // Include header.php
 include __DIR__ . '/../footer.php'; 
 ?>
+
+<script>
+    document.getElementById('edit-product-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        console.log('Form submitted');
+
+        const productId = document.querySelector('input[name="id"]').value;
+        console.log('Product ID:', productId);
+
+        // Create FormData object to handle file uploads
+        const formData = new FormData(this);
+        formData.append('_method', 'PUT'); // Add method override
+
+        console.log('Sending request to:', `/ProductManager/api/products/${productId}`);
+
+        fetch(`/ProductManager/api/products/${productId}`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    window.location.href = '/ProductManager/Product/list';
+                } else {
+                    // Display errors
+                    const errorMessages = document.getElementById('error-messages');
+                    const errorList = document.getElementById('error-list');
+
+                    errorList.innerHTML = '';
+
+                    if (data.errors) {
+                        Object.values(data.errors).forEach(error => {
+                            const li = document.createElement('li');
+                            li.textContent = error;
+                            errorList.appendChild(li);
+                        });
+                    } else if (data.message) {
+                        const li = document.createElement('li');
+                        li.textContent = data.message;
+                        errorList.appendChild(li);
+                    } else {
+                        const li = document.createElement('li');
+                        li.textContent = 'An unknown error occurred';
+                        errorList.appendChild(li);
+                    }
+
+                    errorMessages.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the product');
+            });
+    });
+</script>
