@@ -111,7 +111,7 @@ include __DIR__ . '/../footer.php';
         }
 
         productGrid.innerHTML = products.map(product => `
-        <div class="relative bg-white/80 p-6 rounded-2xl shadow-xl glassmorphism hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:rotate-1 group">
+        <div class="relative bg-white/80 p-6 rounded-2xl shadow-xl glassmorphism hover:shadow-2xl transition-all duration-300 transform hover:scale-105 hover:rotate-1 group flex flex-col h-full">
             <!-- Product Header -->
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
@@ -147,8 +147,11 @@ include __DIR__ . '/../footer.php';
                      class="mt-4 w-full h-auto object-cover rounded-xl">
             ` : ''}
 
+            <!-- Spacer to push buttons to bottom -->
+            <div class="flex-grow"></div>
+
             <!-- Action Buttons -->
-            <div class="flex mt-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div class="flex mt-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-full">
                 ${isAdmin ? `
                     <!-- Admin Actions -->
                     <div class="grid grid-cols-2 gap-2 w-full">
