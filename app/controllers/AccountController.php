@@ -1,14 +1,17 @@
 <?php
 require_once('app/config/database.php');
 require_once('app/models/AccountModel.php');
+require_once('app/utils/JWTHandler.php');
 
 class AccountController {
     private $accountModel;
     private $db;
+    private $jwtHandler;
 
     public function __construct() {
         $this->db = (new Database())->getConnection();
         $this->accountModel = new AccountModel($this->db);
+        $this->jwtHandler = new JWTHandler();
     }
 
     public function auth() {
@@ -95,6 +98,18 @@ class AccountController {
                         session_start();
                     }
 
+                    // Generate JWT token
+                    $userData = [
+                        'id' => $account->id,
+                        'username' => $account->username,
+                        'fullname' => $account->fullname,
+                        'role' => $account->role
+                    ];
+
+                    $token = $this->jwtHandler->encode($userData);
+
+                    // Store token in session
+                    $_SESSION['jwt_token'] = $token;
                     $_SESSION['username'] = $account->username;
                     $_SESSION['user_id'] = $account->id;
                     $_SESSION['fullname'] = $account->fullname;
@@ -111,6 +126,7 @@ class AccountController {
 
     public function logout() {
         session_start();
+        unset($_SESSION['jwt_token']);
         unset($_SESSION['username']);
         unset($_SESSION['user_id']);
         unset($_SESSION['fullname']);

@@ -15,6 +15,12 @@
       <phpcs_by_interpreter asDefaultInterpreter="true" interpreter_id="199553ba-4720-495a-b3be-bc1ecb80f736" timeout="30000" />
     </phpcs_settings>
   </component>
+  <component name="PhpIncludePathManager">
+    <include_path>
+      <path value="$PROJECT_DIR$/vendor/firebase/php-jwt" />
+      <path value="$PROJECT_DIR$/vendor/composer" />
+    </include_path>
+  </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.3">
     <option name="suggestChangeDefaultLanguageLevel" value="false" />
   </component>

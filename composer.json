@@ -1,0 +1,9 @@
+{
+    "name": "product-manager/app",
+    "description": "Product Manager Application",
+    "type": "project",
+    "require": {
+        "php": "8.3.16",
+        "firebase/php-jwt": "^6.11"
+    }
+}

@@ -1,4 +1,4 @@
-<?php include 'app/views/header.php'; ?>
+<?php include 'app\views/header.php'; ?>
 
 <style>
     .custom-card {

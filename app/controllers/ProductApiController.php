@@ -2,20 +2,62 @@
 require_once('app/config/database.php');
 require_once('app/models/ProductModel.php');
 require_once('app/models/CategoryModel.php');
-require_once('app/helpers/SessionHelper.php');
+require_once('app/middleware/JWTMiddleware.php');
 
 class ProductApiController
 {
     private $productModel;
     private $db;
+    private $jwtMiddleware;
+    private $currentUser;
 
     public function __construct()
     {
         $this->db = (new Database())->getConnection();
         $this->productModel = new ProductModel($this->db);
+        $this->jwtMiddleware = new JWTMiddleware();
 
         // Set content type for all responses
         header('Content-Type: application/json');
+
+        // Authenticate for protected routes
+        if ($this->requiresAuth()) {
+            $this->authenticate();
+        }
+    }
+
+    // Helper method to determine if the current route requires authentication
+    private function requiresAuth()
+    {
+        global $url; // Use the $url array from index.php
+        $method = $_SERVER['REQUEST_METHOD'];
+
+        // Public endpoints (no auth required)
+        if ($method === 'GET' &&
+            isset($url[0]) && $url[0] === 'api' &&
+            isset($url[1]) && $url[1] === 'products') {
+            return false;
+        }
+
+        return true;
+    }
+
+    // Helper method to authenticate requests
+    private function authenticate()
+    {
+        $this->currentUser = $this->jwtMiddleware->authenticate();
+
+        if (!$this->currentUser) {
+            $this->sendResponse(['success' => false, 'message' => 'Unauthorized - Invalid or missing token'], 401);
+        }
+    }
+
+    // Helper method to check admin permissions
+    private function requireAdmin()
+    {
+        if (!$this->jwtMiddleware->isAdmin($this->currentUser)) {
+            $this->sendResponse(['success' => false, 'message' => 'Forbidden - Admin access required'], 403);
+        }
     }
 
     // Helper method to send JSON responses
@@ -55,9 +97,7 @@ class ProductApiController
     // POST /api/products
     public function store()
     {
-        if (!SessionHelper::isAdmin()) {
-            $this->sendResponse(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $this->requireAdmin();
 
         if (!empty($_FILES)) {
             // Handle form data
@@ -96,9 +136,7 @@ class ProductApiController
     // PUT /api/products/{id}
     public function update($id)
     {
-        if (!SessionHelper::isAdmin()) {
-            $this->sendResponse(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $this->requireAdmin();
 
         // Check if this is a multipart form submission or JSON
         if (!empty($_POST)) {
@@ -144,9 +182,7 @@ class ProductApiController
     // DELETE /api/products/{id}
     public function destroy($id)
     {
-        if (!SessionHelper::isAdmin()) {
-            $this->sendResponse(['success' => false, 'message' => 'Unauthorized'], 401);
-        }
+        $this->requireAdmin();
 
         if ($this->productModel->deleteProduct($id)) {
             $this->sendResponse(['success' => true, 'message' => 'Product deleted successfully']);
