@@ -25,6 +25,11 @@ class CategoryModel
     // Get category by ID
     public function getCategoryById($id)
     {
+        // Validate ID
+        if (!is_numeric($id) || $id <= 0) {
+            return false;
+        }
+
         $query = "SELECT id, name, description FROM " . $this->table_name . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -41,6 +46,19 @@ class CategoryModel
         } elseif (strlen($name) > 100) {
             $errors['name'] = 'Tên danh mục không được vượt quá 100 ký tự';
         }
+
+        // Check if category name already exists
+        if (!empty($name)) {
+            $checkQuery = "SELECT COUNT(*) FROM " . $this->table_name . " WHERE name = :name";
+            $checkStmt = $this->conn->prepare($checkQuery);
+            $checkStmt->bindParam(':name', $name);
+            $checkStmt->execute();
+
+            if ($checkStmt->fetchColumn() > 0) {
+                $errors['name'] = 'Tên danh mục đã tồn tại';
+            }
+        }
+
         if (count($errors) > 0) {
             return $errors;
         }
@@ -64,6 +82,20 @@ class CategoryModel
         } elseif (strlen($name) > 100) {
             $errors['name'] = 'Tên danh mục không được vượt quá 100 ký tự';
         }
+
+        // Check if category name already exists (excluding current category)
+        if (!empty($name)) {
+            $checkQuery = "SELECT COUNT(*) FROM " . $this->table_name . " WHERE name = :name AND id != :id";
+            $checkStmt = $this->conn->prepare($checkQuery);
+            $checkStmt->bindParam(':name', $name);
+            $checkStmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $checkStmt->execute();
+
+            if ($checkStmt->fetchColumn() > 0) {
+                $errors['name'] = 'Tên danh mục đã tồn tại';
+            }
+        }
+
         if (count($errors) > 0) {
             return $errors;
         }
@@ -82,6 +114,17 @@ class CategoryModel
     // Delete category
     public function deleteCategory($id)
     {
+        // Check if category is in use by any products
+        $checkQuery = "SELECT COUNT(*) FROM product WHERE category_id = :id";
+        $checkStmt = $this->conn->prepare($checkQuery);
+        $checkStmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $checkStmt->execute();
+
+        if ($checkStmt->fetchColumn() > 0) {
+            // Category is in use, cannot delete
+            return false;
+        }
+
         $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);

@@ -190,7 +190,9 @@ include __DIR__ . '/../footer.php';
         if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
             fetch(`/ProductManager/api/products/${id}`, {
                 method: 'DELETE',
-                headers: {'Content-Type': 'application/json'}
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+                }
             })
                 .then(response => response.json())
                 .then(data => {

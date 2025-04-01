@@ -61,14 +61,17 @@ include __DIR__ . '/../footer.php';
 
         fetch(`/ProductManager/api/categories/${categoryId}`, {
             method: 'PUT',
+            body: JSON.stringify({
+                name: formData.get('name'),
+                description: formData.get('description')
+            }),
             headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
+                'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+            }
         })
             .then(response => response.json())
             .then(data => {
-                if (data.status === 'success') {
+                if (data.success) {
                     window.location.href = '/ProductManager/Category/list';
                 } else {
                     // Display errors

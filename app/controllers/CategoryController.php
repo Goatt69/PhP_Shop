@@ -17,6 +17,7 @@ class CategoryController
     private function checkAdminAccess()
     {
         if (!SessionHelper::isAdmin()) {
+            // Redirect non-admin users to product list
             header('Location: /ProductManager/Product/list');
             exit;
         }
@@ -25,7 +26,6 @@ class CategoryController
     // List all categories
     public function list()
     {
-        $this->checkAdminAccess();
         // The actual data will be loaded via API in the view
         include 'app/views/category/list.php';
     }
@@ -33,7 +33,6 @@ class CategoryController
     // Show add category form
     public function add()
     {
-        $this->checkAdminAccess();
         // Form submission will be handled by the API
         include 'app/views/category/add.php';
     }
@@ -58,8 +57,6 @@ class CategoryController
     // Delete category (redirect to API)
     public function delete($id)
     {
-        $this->checkAdminAccess();
-
         // Redirect to the list page after deletion
         // The actual deletion will be handled by JavaScript in the view
         header('Location: /ProductManager/Category/list');

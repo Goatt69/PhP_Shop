@@ -1,20 +1,62 @@
 <?php
 require_once('app/config/database.php');
 require_once('app/models/CategoryModel.php');
-require_once('app/helpers/SessionHelper.php');
+require_once('app/middleware/JWTMiddleware.php');
 
 class CategoryApiController
 {
     private $categoryModel;
     private $db;
+    private $jwtMiddleware;
+    private $currentUser;
 
     public function __construct()
     {
         $this->db = (new Database())->getConnection();
         $this->categoryModel = new CategoryModel($this->db);
+        $this->jwtMiddleware = new JWTMiddleware();
 
         // Set content type for all responses
         header('Content-Type: application/json');
+
+        // Authenticate for protected routes
+        if ($this->requiresAuth()) {
+            $this->authenticate();
+        }
+    }
+
+    // Helper method to determine if the current route requires authentication
+    private function requiresAuth()
+    {
+        global $url; // Use the $url array from index.php
+        $method = $_SERVER['REQUEST_METHOD'];
+
+        // Public endpoints (no auth required)
+        if ($method === 'GET' &&
+            isset($url[0]) && $url[0] === 'api' &&
+            isset($url[1]) && $url[1] === 'categories') {
+            return false;
+        }
+
+        return true;
+    }
+
+    // Helper method to authenticate requests
+    private function authenticate()
+    {
+        $this->currentUser = $this->jwtMiddleware->authenticate();
+
+        if (!$this->currentUser) {
+            $this->sendResponse(['success' => false, 'message' => 'Unauthorized - Invalid or missing token'], 401);
+        }
+    }
+
+    // Helper method to check admin permissions
+    private function requireAdmin()
+    {
+        if (!$this->jwtMiddleware->isAdmin($this->currentUser)) {
+            $this->sendResponse(['success' => false, 'message' => 'Forbidden - Admin access required'], 403);
+        }
     }
 
     // Helper method to send JSON responses
@@ -29,10 +71,7 @@ class CategoryApiController
     public function index()
     {
         $categories = $this->categoryModel->getCategories();
-        $this->sendResponse([
-            'status' => 'success',
-            'data' => $categories
-        ]);
+        $this->sendResponse(['success' => true, 'data' => $categories]);
     }
 
     // GET /api/categories/{id}
@@ -41,27 +80,16 @@ class CategoryApiController
         $category = $this->categoryModel->getCategoryById($id);
 
         if ($category) {
-            $this->sendResponse([
-                'status' => 'success',
-                'data' => $category
-            ]);
+            $this->sendResponse(['success' => true, 'data' => $category]);
         } else {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Category not found'
-            ], 404);
+            $this->sendResponse(['success' => false, 'message' => 'Category not found'], 404);
         }
     }
 
     // POST /api/categories
     public function store()
     {
-        if (!SessionHelper::isAdmin()) {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Unauthorized access'
-            ], 403);
-        }
+        $this->requireAdmin();
 
         // Get JSON input
         $data = json_decode(file_get_contents('php://input'), true);
@@ -72,10 +100,7 @@ class CategoryApiController
         }
 
         if (empty($data)) {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'No data provided'
-            ], 400);
+            $this->sendResponse(['success' => false, 'message' => 'No data provided'], 400);
         }
 
         $name = $data['name'] ?? '';
@@ -85,32 +110,18 @@ class CategoryApiController
 
         if (is_array($result)) {
             // Validation errors
-            $this->sendResponse([
-                'status' => 'error',
-                'errors' => $result
-            ], 422);
+            $this->sendResponse(['success' => false, 'errors' => $result], 422);
         } elseif ($result) {
-            $this->sendResponse([
-                'status' => 'success',
-                'message' => 'Category created successfully'
-            ], 201);
+            $this->sendResponse(['success' => true, 'message' => 'Category created successfully'], 201);
         } else {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Failed to create category'
-            ], 500);
+            $this->sendResponse(['success' => false, 'message' => 'Failed to create category'], 500);
         }
     }
 
     // PUT /api/categories/{id}
     public function update($id)
     {
-        if (!SessionHelper::isAdmin()) {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Unauthorized access'
-            ], 403);
-        }
+        $this->requireAdmin();
 
         // Get JSON input
         $data = json_decode(file_get_contents('php://input'), true);
@@ -121,19 +132,13 @@ class CategoryApiController
         }
 
         if (empty($data)) {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'No data provided'
-            ], 400);
+            $this->sendResponse(['success' => false, 'message' => 'No data provided'], 400);
         }
 
         // Check if category exists
         $category = $this->categoryModel->getCategoryById($id);
         if (!$category) {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Category not found'
-            ], 404);
+            $this->sendResponse(['success' => false, 'message' => 'Category not found'], 404);
         }
 
         $name = $data['name'] ?? '';
@@ -143,52 +148,29 @@ class CategoryApiController
 
         if (is_array($result)) {
             // Validation errors
-            $this->sendResponse([
-                'status' => 'error',
-                'errors' => $result
-            ], 422);
+            $this->sendResponse(['success' => false, 'errors' => $result], 422);
         } elseif ($result) {
-            $this->sendResponse([
-                'status' => 'success',
-                'message' => 'Category updated successfully'
-            ]);
+            $this->sendResponse(['success' => true, 'message' => 'Category updated successfully']);
         } else {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Failed to update category'
-            ], 500);
+            $this->sendResponse(['success' => false, 'message' => 'Failed to update category'], 500);
         }
     }
 
     // DELETE /api/categories/{id}
     public function destroy($id)
     {
-        if (!SessionHelper::isAdmin()) {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Unauthorized access'
-            ], 403);
-        }
+        $this->requireAdmin();
 
         // Check if category exists
         $category = $this->categoryModel->getCategoryById($id);
         if (!$category) {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Category not found'
-            ], 404);
+            $this->sendResponse(['success' => false, 'message' => 'Category not found'], 404);
         }
 
         if ($this->categoryModel->deleteCategory($id)) {
-            $this->sendResponse([
-                'status' => 'success',
-                'message' => 'Category deleted successfully'
-            ]);
+            $this->sendResponse(['success' => true, 'message' => 'Category deleted successfully']);
         } else {
-            $this->sendResponse([
-                'status' => 'error',
-                'message' => 'Failed to delete category'
-            ], 500);
+            $this->sendResponse(['success' => false, 'message' => 'Failed to delete category'], 500);
         }
     }
 }

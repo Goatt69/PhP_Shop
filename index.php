@@ -15,7 +15,7 @@ if ($isApiRequest) {
     // API routing
     $resource = isset($url[1]) ? $url[1] : '';
     $id = isset($url[2]) && is_numeric($url[2]) ? $url[2] : null;
-    $action = isset($url[3]) ? $url[3] : '';
+    $action = isset($url[2]) && !is_numeric($url[2]) ? $url[2] : '';
 
     // Map HTTP method to controller action
     $method = $_SERVER['REQUEST_METHOD'];
@@ -25,7 +25,24 @@ if ($isApiRequest) {
         $method = strtoupper($_POST['_method']);
     }
 
-    if ($resource === 'products') {
+    // Handle auth API endpoints
+    if ($resource === 'auth') {
+        require_once 'app/controllers/AuthApiController.php';
+        $controller = new AuthApiController();
+
+        if ($action === 'login' && $method === 'POST') {
+            $controller->login();
+        } elseif ($action === 'register' && $method === 'POST') {
+            $controller->register();
+        } else {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['error' => 'Auth endpoint not found']);
+            exit;
+        }
+    }
+    // Handle products API endpoints
+    elseif ($resource === 'products') {
         require_once 'app/controllers/ProductApiController.php';
         $controller = new ProductApiController();
 
@@ -61,7 +78,9 @@ if ($isApiRequest) {
                 echo json_encode(['error' => 'Method not allowed']);
                 exit;
         }
-    } elseif ($resource === 'categories') {
+    }
+    // Handle categories API endpoints
+    elseif ($resource === 'categories') {
         require_once 'app/controllers/CategoryApiController.php';
         $controller = new CategoryApiController();
 
@@ -97,7 +116,9 @@ if ($isApiRequest) {
                 echo json_encode(['error' => 'Method not allowed']);
                 exit;
         }
-    }elseif ($resource === 'orders' && $method === 'POST') {
+    }
+    // Handle orders API endpoint
+    elseif ($resource === 'orders' && $method === 'POST') {
         require_once 'app/controllers/ProductApiController.php';
         $controller = new ProductApiController();
         $controller->createOrder();

@@ -95,49 +95,158 @@ include __DIR__ . '/../footer.php';
         const formData = new FormData(this);
         formData.append('_method', 'PUT'); // Add method override
 
+        // Add CSRF token if available
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            formData.append('csrf_token', csrfToken);
+        }
+
+        // Show loading state
+        const submitButton = this.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.innerHTML = '<span class="relative z-10 animate-pulse">Đang xử lý...</span>';
+        submitButton.disabled = true;
+
         console.log('Sending request to:', `/ProductManager/api/products/${productId}`);
 
         fetch(`/ProductManager/api/products/${productId}`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+            }
         })
-            .then(response => {
-                console.log('Response status:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                console.log('Response data:', data);
-                if (data.success) {
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                console.log('Response not OK');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                // Show success message before redirecting
+                const successMessage = document.createElement('div');
+                successMessage.className = 'bg-green-100 text-green-800 p-4 rounded-xl mb-6 animate-fade-in';
+                successMessage.innerHTML = '<p>Sản phẩm đã được cập nhật thành công! Đang chuyển hướng...</p>';
+
+                this.parentNode.insertBefore(successMessage, this);
+
+                // Redirect after a short delay
+                setTimeout(() => {
                     window.location.href = '/ProductManager/Product/list';
-                } else {
-                    // Display errors
-                    const errorMessages = document.getElementById('error-messages');
-                    const errorList = document.getElementById('error-list');
+                }, 1500);
+            } else {
+                // Display errors
+                let errorContainer = document.getElementById('error-messages');
 
-                    errorList.innerHTML = '';
-
-                    if (data.errors) {
-                        Object.values(data.errors).forEach(error => {
-                            const li = document.createElement('li');
-                            li.textContent = error;
-                            errorList.appendChild(li);
-                        });
-                    } else if (data.message) {
-                        const li = document.createElement('li');
-                        li.textContent = data.message;
-                        errorList.appendChild(li);
-                    } else {
-                        const li = document.createElement('li');
-                        li.textContent = 'An unknown error occurred';
-                        errorList.appendChild(li);
-                    }
-
-                    errorMessages.style.display = 'block';
+                if (!errorContainer) {
+                    errorContainer = document.createElement('div');
+                    errorContainer.id = 'error-messages';
+                    errorContainer.className = 'bg-red-100/80 text-red-800 p-4 rounded-xl mb-6 glassmorphism animate-fade-in';
+                    this.parentNode.insertBefore(errorContainer, this);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating the product');
-            });
+
+                let errorList = '<ul id="error-list" class="list-disc pl-5">';
+
+                if (data.errors) {
+                    Object.values(data.errors).forEach(error => {
+                        errorList += `<li>${error}</li>`;
+                    });
+                } else if (data.message) {
+                    errorList += `<li>${data.message}</li>`;
+                } else {
+                    errorList += '<li>Đã xảy ra lỗi khi cập nhật sản phẩm</li>';
+                }
+
+                errorList += '</ul>';
+                errorContainer.innerHTML = errorList;
+                errorContainer.style.display = 'block';
+
+                // Restore button state
+                submitButton.innerHTML = originalButtonText;
+                submitButton.disabled = false;
+
+                // Scroll to error messages
+                errorContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            // Display generic error
+            let errorContainer = document.getElementById('error-messages');
+
+            if (!errorContainer) {
+                errorContainer = document.createElement('div');
+                errorContainer.id = 'error-messages';
+                errorContainer.className = 'bg-red-100/80 text-red-800 p-4 rounded-xl mb-6 glassmorphism animate-fade-in';
+                this.parentNode.insertBefore(errorContainer, this);
+            }
+
+            errorContainer.innerHTML = `
+                <ul id="error-list" class="list-disc pl-5">
+                    <li>Đã xảy ra lỗi khi cập nhật sản phẩm. Vui lòng thử lại sau.</li>
+                    <li>Chi tiết lỗi: ${error.message}</li>
+                </ul>
+            `;
+            errorContainer.style.display = 'block';
+
+            // Restore button state
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+
+            // Scroll to error messages
+            errorContainer.scrollIntoView({ behavior: 'smooth' });
+        });
     });
+
+    // Optional: Add client-side validation
+    function validateForm() {
+        const name = document.getElementById('name').value.trim();
+        const price = document.getElementById('price').value.trim();
+        const category = document.getElementById('category_id').value;
+
+        let isValid = true;
+        let errorMessages = [];
+
+        if (name === '') {
+            errorMessages.push('Tên sản phẩm không được để trống');
+            isValid = false;
+        }
+
+        if (price === '' || isNaN(price) || Number(price) <= 0) {
+            errorMessages.push('Giá sản phẩm phải là số dương');
+            isValid = false;
+        }
+
+        if (category === '') {
+            errorMessages.push('Vui lòng chọn danh mục');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            let errorContainer = document.getElementById('error-messages');
+
+            if (!errorContainer) {
+                errorContainer = document.createElement('div');
+                errorContainer.id = 'error-messages';
+                errorContainer.className = 'bg-red-100/80 text-red-800 p-4 rounded-xl mb-6 glassmorphism animate-fade-in';
+                document.getElementById('edit-product-form').parentNode.insertBefore(errorContainer, document.getElementById('edit-product-form'));
+            }
+
+            let errorList = '<ul id="error-list" class="list-disc pl-5">';
+            errorMessages.forEach(msg => {
+                errorList += `<li>${msg}</li>`;
+            });
+            errorList += '</ul>';
+
+            errorContainer.innerHTML = errorList;
+            errorContainer.style.display = 'block';
+            errorContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        return isValid;
+    }
 </script>
