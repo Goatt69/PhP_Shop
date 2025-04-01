@@ -44,19 +44,21 @@ include __DIR__ . '/../footer.php';
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Fetch categories from API
-        fetch('/ProductManager/api/categories')
+        fetch('/ProductManager/api/categories', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+            }
+        })
             .then(response => response.json())
             .then(data => {
-                if (data.status === 'success') {
+                // Update condition to match API response structure
+                if (data.success) {  // Changed from data.status
                     renderCategories(data.data);
                 } else {
                     showError('Failed to load categories');
                 }
             })
-            .catch(error => {
-                console.error('Error fetching categories:', error);
-                showError('Error loading categories. Please try again later.');
-            });
     });
 
     function renderCategories(categories) {
@@ -106,11 +108,14 @@ include __DIR__ . '/../footer.php';
     function deleteCategory(id) {
         if (confirm('Bạn có chắc chắn muốn xóa danh mục này?')) {
             fetch(`/ProductManager/api/categories/${id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+                }
             })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'success') {
+                    if (data.success) {
                         // Refresh the category list
                         location.reload();
                     } else {

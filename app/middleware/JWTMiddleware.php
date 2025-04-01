@@ -21,6 +21,10 @@ class JWTMiddleware
         $authHeader = $headers['Authorization'] ?? '';
 
         if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            // If no Authorization header, check for session authentication
+            if (isset($_SESSION['user']) && !empty($_SESSION['user'])) {
+                return $_SESSION['user'];
+            }
             return null;
         }
 

@@ -87,7 +87,10 @@ include __DIR__ . '/../footer.php';
 
         fetch('/ProductManager/api/products', {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+            }
         })
             .then(response => response.json())
             .then(data => {
