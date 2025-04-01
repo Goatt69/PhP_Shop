@@ -85,11 +85,13 @@ include __DIR__ . '/../footer.php';
         // Create FormData object to handle file uploads
         const formData = new FormData(this);
 
+        const token = '<?php echo $_SESSION["jwt_token"] ?? ""; ?>';
+
         fetch('/ProductManager/api/products', {
             method: 'POST',
             body: formData,
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+                'Authorization': 'Bearer ' + token
             }
         })
             .then(response => response.json())

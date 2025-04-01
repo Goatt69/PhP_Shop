@@ -58,7 +58,7 @@ include __DIR__ . '/../footer.php';
             name: formData.get('name'),
             description: formData.get('description')
         };
-
+        const token = '<?php echo $_SESSION["jwt_token"] ?? ""; ?>';
         fetch(`/ProductManager/api/categories/${categoryId}`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -66,7 +66,7 @@ include __DIR__ . '/../footer.php';
                 description: formData.get('description')
             }),
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+                'Authorization': 'Bearer ' + token,
             }
         })
             .then(response => response.json())

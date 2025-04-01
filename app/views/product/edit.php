@@ -108,12 +108,13 @@ include __DIR__ . '/../footer.php';
         submitButton.disabled = true;
 
         console.log('Sending request to:', `/ProductManager/api/products/${productId}`);
+        const token = '<?php echo $_SESSION["jwt_token"] ?? ""; ?>';
 
         fetch(`/ProductManager/api/products/${productId}`, {
             method: 'POST',
             body: formData,
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+                'Authorization': 'Bearer ' + token
             }
         })
         .then(response => {

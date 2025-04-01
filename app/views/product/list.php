@@ -185,13 +185,14 @@ include __DIR__ . '/../footer.php';
         // Show the product grid
         productGrid.style.display = 'grid';
     }
-
+    const token = '<?php echo $_SESSION["jwt_token"] ?? ""; ?>';
     function deleteProduct(id) {
+
         if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
             fetch(`/ProductManager/api/products/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+                    'Authorization': 'Bearer ' + token
                 }
             })
                 .then(response => response.json())

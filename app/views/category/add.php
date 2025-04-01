@@ -43,7 +43,7 @@ include __DIR__ . '/../footer.php';
 <script>
     document.getElementById('add-category-form').addEventListener('submit', function(e) {
         e.preventDefault();
-
+        const token = '<?php echo $_SESSION["jwt_token"] ?? ""; ?>';
         const formData = new FormData(this);
         const data = {
             name: formData.get('name'),
@@ -57,7 +57,7 @@ include __DIR__ . '/../footer.php';
                 description: formData.get('description')
             }),
             headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+                'Authorization': 'Bearer ' + token,
             }
         })
             .then(response => response.json())

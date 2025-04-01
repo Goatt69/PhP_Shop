@@ -94,6 +94,8 @@
     }
 </style>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 <section class="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center p-6 md:p-12">
     <div class="max-w-md w-full p-6 custom-card">
         <!-- Tab Navigation -->
@@ -191,7 +193,6 @@
     </div>
 </section>
 
-<script src="https://kit.fontawesome.com/a076d05399.js"></script>
 <script>
     function showTab(tab) {
         // Get tab elements
